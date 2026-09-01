@@ -57,4 +57,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     implementation("com.google.dagger:hilt-android:2.60.1")
     ksp("com.google.dagger:hilt-android-compiler:2.60.1")
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
+    ksp("androidx.room:room-compiler:2.8.4")
 }

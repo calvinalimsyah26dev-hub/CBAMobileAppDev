@@ -1,6 +1,6 @@
 package com.example.cbamobileapp.di
 
-import com.example.cbamobileapp.data.InMemoryTaskRepository
+import com.example.cbamobileapp.data.RoomTaskRepository
 import com.example.cbamobileapp.data.TaskRepository
 import dagger.Binds
 import dagger.Module
@@ -15,6 +15,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTaskRepository(
-        implementation: InMemoryTaskRepository
+        implementation: RoomTaskRepository
     ): TaskRepository
 }

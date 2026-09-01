@@ -182,7 +182,7 @@ fun AddTaskScreen(
                     showValidationError = true
                 } else {
                     val newTask = ProductivityTask(
-                        id = System.currentTimeMillis(),
+                        id = 0,
                         title = title.trim(),
                         description = description.trim(),
                         priority = selectedPriority,
