@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -14,18 +14,17 @@ import com.example.cbamobileapp.viewmodel.TaskViewModel
 
 @Composable
 fun ProductivityCoachApp(
-    taskViewModel: TaskViewModel = viewModel(),
-    quoteViewModel: QuoteViewModel = viewModel()
+    userEmail: String,
+    onSignOut: () -> Unit,
+    taskViewModel: TaskViewModel = hiltViewModel(),
+    quoteViewModel: QuoteViewModel = hiltViewModel()
 ) {
-    val navController =
-        rememberNavController()
+    val navController = rememberNavController()
 
-    val tasks by
-    taskViewModel.tasks
+    val tasks by taskViewModel.tasks
         .collectAsStateWithLifecycle()
 
-    val quoteUiState =
-        quoteViewModel.uiState
+    val quoteUiState = quoteViewModel.uiState
 
     NavHost(
         navController = navController,
@@ -50,12 +49,13 @@ fun ProductivityCoachApp(
                         taskId,
                         isCompleted ->
 
-                    taskViewModel
-                        .updateTaskCompletion(
-                            taskId = taskId,
-                            isCompleted = isCompleted
-                        )
-                }
+                    taskViewModel.updateTaskCompletion(
+                        taskId = taskId,
+                        isCompleted = isCompleted
+                    )
+                },
+                userEmail = userEmail,
+                onSignOut = onSignOut
             )
         }
 
@@ -64,10 +64,7 @@ fun ProductivityCoachApp(
         ) {
             AddTaskScreen(
                 onSaveTask = { newTask ->
-                    taskViewModel.addTask(
-                        newTask
-                    )
-
+                    taskViewModel.addTask(newTask)
                     navController.popBackStack()
                 },
                 onCancel = {
@@ -77,4 +74,3 @@ fun ProductivityCoachApp(
         }
     }
 }
-

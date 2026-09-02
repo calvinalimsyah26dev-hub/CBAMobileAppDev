@@ -1,17 +1,12 @@
-package com.example.cbamobileapp.data
+package com.example.cbamobileapp.data.cloud
 
-import com.example.cbamobileapp.data.local.TaskEntity
 import com.example.cbamobileapp.model.ProductivityTask
 import com.example.cbamobileapp.model.TaskPriority
 
-fun TaskEntity.toProductivityTask():
-        ProductivityTask {
-
+fun FirestoreTaskDocument.toProductivityTask(): ProductivityTask {
     val taskPriority = try {
         TaskPriority.valueOf(priority)
-    } catch (
-        exception: IllegalArgumentException
-    ) {
+    } catch (exception: IllegalArgumentException) {
         TaskPriority.MEDIUM
     }
 
@@ -21,19 +16,20 @@ fun TaskEntity.toProductivityTask():
         description = description,
         priority = taskPriority,
         estimatedMin = estimatedMinutes,
-        isCompleted = isCompleted
+        isCompleted = completed
     )
 }
 
-fun ProductivityTask.toTaskEntity():
-        TaskEntity {
-
-    return TaskEntity(
-        id = if (id > 0) id else 0,
+fun ProductivityTask.toFirestoreTaskDocument(
+    generatedId: Long
+): FirestoreTaskDocument {
+    return FirestoreTaskDocument(
+        id = generatedId,
         title = title,
         description = description,
         priority = priority.name,
         estimatedMinutes = estimatedMin,
-        isCompleted = isCompleted
+        completed = isCompleted,
+        createdAt = generatedId
     )
 }

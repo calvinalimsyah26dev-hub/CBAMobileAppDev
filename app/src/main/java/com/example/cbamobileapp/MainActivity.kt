@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.example.cbamobileapp.pages.ProductivityCoachApp
+import com.example.cbamobileapp.pages.AuthenticatedApp
 import com.example.cbamobileapp.ui.theme.AiProductivityCoachTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AiProductivityCoachTheme {
-                ProductivityCoachApp()
+                AuthenticatedApp()
             }
         }
     }

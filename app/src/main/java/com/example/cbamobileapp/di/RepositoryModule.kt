@@ -1,8 +1,10 @@
 package com.example.cbamobileapp.di
 
+import com.example.cbamobileapp.repository.AuthRepository
+import com.example.cbamobileapp.repository.FirebaseAuthRepository
 import com.example.cbamobileapp.data.NetworkQuoteRepository
 import com.example.cbamobileapp.data.QuoteRepository
-import com.example.cbamobileapp.data.RoomTaskRepository
+import com.example.cbamobileapp.data.FirestoreTaskRepository
 import com.example.cbamobileapp.data.TaskRepository
 import dagger.Binds
 import dagger.Module
@@ -17,7 +19,7 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTaskRepository(
-        implementation: RoomTaskRepository
+        implementation: FirestoreTaskRepository
     ): TaskRepository
 
     @Binds
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindQuoteRepository(
         implementation: NetworkQuoteRepository
     ): QuoteRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(
+        implementation: FirebaseAuthRepository
+    ): AuthRepository
 }

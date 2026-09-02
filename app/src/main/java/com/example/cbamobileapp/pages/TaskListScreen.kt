@@ -1,20 +1,35 @@
 package com.example.cbamobileapp.pages
 
-
 import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -26,85 +41,171 @@ import com.example.cbamobileapp.model.TaskPriority
 import com.example.cbamobileapp.ui.theme.AiProductivityCoachTheme
 import com.example.cbamobileapp.viewmodel.QuoteUiState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(
     tasks: List<ProductivityTask>,
     quoteUiState: QuoteUiState,
     onRefreshQuote: () -> Unit,
     onAddTaskClick: () -> Unit,
-    onTaskCompletedChange: (
-        taskId: Long,
-        isCompleted: Boolean
-    ) -> Unit,
+    onTaskCompletedChange: (Long, Boolean) -> Unit,
+    userEmail: String,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "AI Productivity Coach",
-            style = MaterialTheme.typography.headlineMedium
-        )
+    var showSettings by remember {
+        mutableStateOf(false)
+    }
 
-        Text(
-            text = "Organise your work and make progress.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    /*
+     * Only tasks that are not completed are displayed.
+     *
+     * When Firestore changes isCompleted to true,
+     * that task is automatically removed from this list.
+     */
+    val activeTasks = tasks.filterNot { task ->
+        task.isCompleted
+    }
 
-        MotivationCard(
-            uiState = quoteUiState,
-            onRefresh = onRefreshQuote
-        )
+    val completedTaskCount = tasks.count { task ->
+        task.isCompleted
+    }
 
-        Text(
-            text = "Completed: ${tasks.count { it.isCompleted }} of ${tasks.size}",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Button(
-            onClick = onAddTaskClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Add a task")
-        }
-
-        if (tasks.isEmpty()) {
-            EmptyTaskMessage(
-                modifier = Modifier.weight(1f)
-            )
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(
-                    items = tasks,
-                    key = { task ->
-                        task.id
-                    }
-                ) { task ->
-                    TaskCard(
-                        task = task,
-                        onCompletedChange = { isCompleted ->
-                            onTaskCompletedChange(
-                                task.id,
-                                isCompleted
-                            )
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text("AI Productivity Coach")
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            showSettings = true
                         }
-                    )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Open settings"
+                        )
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 8.dp
+                ),
+            verticalArrangement =
+                Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Organise your work and make progress.",
+                style = MaterialTheme.typography.bodyLarge,
+                color =
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            MotivationCard(
+                uiState = quoteUiState,
+                onRefresh = onRefreshQuote
+            )
+
+            TaskProgressText(
+                remainingTaskCount = activeTasks.size,
+                completedTaskCount = completedTaskCount
+            )
+
+            Button(
+                onClick = onAddTaskClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Add a task")
+            }
+
+            if (activeTasks.isEmpty()) {
+                EmptyTaskMessage(
+                    hasCompletedTasks =
+                        completedTaskCount > 0,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement =
+                        Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = activeTasks,
+                        key = { task ->
+                            task.id
+                        }
+                    ) { task ->
+                        TaskCard(
+                            task = task,
+                            onCompletedChange = {
+                                    isCompleted ->
+
+                                onTaskCompletedChange(
+                                    task.id,
+                                    isCompleted
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
     }
+
+    if (showSettings) {
+        SettingsDialog(
+            userEmail = userEmail,
+            onDismiss = {
+                showSettings = false
+            },
+            onSignOut = {
+                showSettings = false
+                onSignOut()
+            }
+        )
+    }
+}
+
+@Composable
+private fun TaskProgressText(
+    remainingTaskCount: Int,
+    completedTaskCount: Int
+) {
+    val remainingText =
+        if (remainingTaskCount == 1) {
+            "1 task remaining"
+        } else {
+            "$remainingTaskCount tasks remaining"
+        }
+
+    val completedText =
+        if (completedTaskCount == 1) {
+            "1 completed"
+        } else {
+            "$completedTaskCount completed"
+        }
+
+    Text(
+        text = "$remainingText • $completedText",
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.primary
+    )
 }
 
 @Composable
 private fun EmptyTaskMessage(
+    hasCompletedTasks: Boolean,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -112,13 +213,89 @@ private fun EmptyTaskMessage(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "You don't have any tasks yet.\n" +
-                    "Add your first task to get started.",
+            text = if (hasCompletedTasks) {
+                "All tasks completed!\nGreat work."
+            } else {
+                "You don't have any tasks yet.\n" +
+                        "Add your first task to get started."
+            },
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color =
+                MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
     }
+}
+
+@Composable
+private fun SettingsDialog(
+    userEmail: String,
+    onDismiss: () -> Unit,
+    onSignOut: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Settings")
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Signed in as",
+                    style =
+                        MaterialTheme.typography.labelMedium,
+                    color =
+                        MaterialTheme.colorScheme
+                            .onSurfaceVariant
+                )
+
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
+
+                Text(
+                    text = userEmail.ifBlank {
+                        "No email available"
+                    },
+                    style =
+                        MaterialTheme.typography.bodyLarge
+                )
+
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                Text(
+                    text =
+                        "Signing out will return you to " +
+                                "the login screen. Your tasks are " +
+                                "stored securely in your account.",
+                    style =
+                        MaterialTheme.typography.bodyMedium
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onSignOut,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.error,
+                    contentColor =
+                        MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text("Sign out")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 /*
@@ -144,15 +321,12 @@ private val taskListPreviewTasks = listOf(
     ProductivityTask(
         id = 3,
         title = "Plan tomorrow",
-        description = "Select the three most important tasks",
+        description =
+            "Select the three most important tasks",
         priority = TaskPriority.LOW,
         estimatedMin = 10
     )
 )
-
-/*
- * TaskListScreen previews
- */
 
 @Preview(
     name = "Task List With Tasks",
@@ -166,18 +340,19 @@ private fun TaskListScreenPreview() {
         Surface {
             TaskListScreen(
                 tasks = taskListPreviewTasks,
-                quoteUiState =
-                    QuoteUiState.Success(
-                        quote = MotivationalQuote(
-                            text =
-                                "Success is built one task at a time.",
-                            author =
-                                "Productivity Coach"
-                        )
-                    ),
+                quoteUiState = QuoteUiState.Success(
+                    quote = MotivationalQuote(
+                        text =
+                            "Success is built one task at a time.",
+                        author =
+                            "Productivity Coach"
+                    )
+                ),
                 onRefreshQuote = {},
                 onAddTaskClick = {},
-                onTaskCompletedChange = { _, _ -> }
+                onTaskCompletedChange = { _, _ -> },
+                userEmail = "student@example.com",
+                onSignOut = {}
             )
         }
     }
@@ -195,18 +370,47 @@ private fun EmptyTaskListScreenPreview() {
         Surface {
             TaskListScreen(
                 tasks = emptyList(),
-                quoteUiState =
-                    QuoteUiState.Success(
-                        MotivationalQuote(
-                            text =
-                                "Start where you are.",
-                            author =
-                                "Arthur Ashe"
-                        )
-                    ),
+                quoteUiState = QuoteUiState.Success(
+                    quote = MotivationalQuote(
+                        text = "Start where you are.",
+                        author = "Arthur Ashe"
+                    )
+                ),
                 onRefreshQuote = {},
                 onAddTaskClick = {},
-                onTaskCompletedChange = { _, _ -> }
+                onTaskCompletedChange = { _, _ -> },
+                userEmail = "student@example.com",
+                onSignOut = {}
+            )
+        }
+    }
+}
+
+@Preview(
+    name = "All Tasks Completed",
+    showBackground = true,
+    showSystemUi = true,
+    device = "spec:width=411dp,height=891dp"
+)
+@Composable
+private fun CompletedTaskListScreenPreview() {
+    AiProductivityCoachTheme {
+        Surface {
+            TaskListScreen(
+                tasks = taskListPreviewTasks.map { task ->
+                    task.copy(isCompleted = true)
+                },
+                quoteUiState = QuoteUiState.Success(
+                    quote = MotivationalQuote(
+                        text = "Great work!",
+                        author = "Productivity Coach"
+                    )
+                ),
+                onRefreshQuote = {},
+                onAddTaskClick = {},
+                onTaskCompletedChange = { _, _ -> },
+                userEmail = "student@example.com",
+                onSignOut = {}
             )
         }
     }
@@ -224,18 +428,17 @@ private fun DarkTaskListScreenPreview() {
         Surface {
             TaskListScreen(
                 tasks = taskListPreviewTasks,
-                quoteUiState =
-                    QuoteUiState.Success(
-                        MotivationalQuote(
-                            text =
-                                "Start where you are.",
-                            author =
-                                "Arthur Ashe"
-                        )
-                    ),
+                quoteUiState = QuoteUiState.Success(
+                    quote = MotivationalQuote(
+                        text = "Start where you are.",
+                        author = "Arthur Ashe"
+                    )
+                ),
                 onRefreshQuote = {},
                 onAddTaskClick = {},
-                onTaskCompletedChange = { _, _ -> }
+                onTaskCompletedChange = { _, _ -> },
+                userEmail = "student@example.com",
+                onSignOut = {}
             )
         }
     }
