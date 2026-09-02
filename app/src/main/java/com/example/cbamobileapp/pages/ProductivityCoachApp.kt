@@ -9,11 +9,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.cbamobileapp.viewmodel.QuoteViewModel
 import com.example.cbamobileapp.viewmodel.TaskViewModel
 
 @Composable
 fun ProductivityCoachApp(
-    taskViewModel: TaskViewModel = viewModel()
+    taskViewModel: TaskViewModel = viewModel(),
+    quoteViewModel: QuoteViewModel = viewModel()
 ) {
     val navController =
         rememberNavController()
@@ -21,6 +23,9 @@ fun ProductivityCoachApp(
     val tasks by
     taskViewModel.tasks
         .collectAsStateWithLifecycle()
+
+    val quoteUiState =
+        quoteViewModel.uiState
 
     NavHost(
         navController = navController,
@@ -32,6 +37,10 @@ fun ProductivityCoachApp(
         ) {
             TaskListScreen(
                 tasks = tasks,
+                quoteUiState = quoteUiState,
+                onRefreshQuote = {
+                    quoteViewModel.refreshQuote()
+                },
                 onAddTaskClick = {
                     navController.navigate(
                         AppRoutes.ADD_TASK

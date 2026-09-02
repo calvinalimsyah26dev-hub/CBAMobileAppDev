@@ -20,13 +20,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.cbamobileapp.model.MotivationalQuote
 import com.example.cbamobileapp.model.ProductivityTask
 import com.example.cbamobileapp.model.TaskPriority
 import com.example.cbamobileapp.ui.theme.AiProductivityCoachTheme
+import com.example.cbamobileapp.viewmodel.QuoteUiState
 
 @Composable
 fun TaskListScreen(
     tasks: List<ProductivityTask>,
+    quoteUiState: QuoteUiState,
+    onRefreshQuote: () -> Unit,
     onAddTaskClick: () -> Unit,
     onTaskCompletedChange: (
         taskId: Long,
@@ -49,6 +53,11 @@ fun TaskListScreen(
             text = "Organise your work and make progress.",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        MotivationCard(
+            uiState = quoteUiState,
+            onRefresh = onRefreshQuote
         )
 
         Text(
@@ -157,6 +166,16 @@ private fun TaskListScreenPreview() {
         Surface {
             TaskListScreen(
                 tasks = taskListPreviewTasks,
+                quoteUiState =
+                    QuoteUiState.Success(
+                        quote = MotivationalQuote(
+                            text =
+                                "Success is built one task at a time.",
+                            author =
+                                "Productivity Coach"
+                        )
+                    ),
+                onRefreshQuote = {},
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> }
             )
@@ -176,6 +195,16 @@ private fun EmptyTaskListScreenPreview() {
         Surface {
             TaskListScreen(
                 tasks = emptyList(),
+                quoteUiState =
+                    QuoteUiState.Success(
+                        MotivationalQuote(
+                            text =
+                                "Start where you are.",
+                            author =
+                                "Arthur Ashe"
+                        )
+                    ),
+                onRefreshQuote = {},
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> }
             )
@@ -195,6 +224,16 @@ private fun DarkTaskListScreenPreview() {
         Surface {
             TaskListScreen(
                 tasks = taskListPreviewTasks,
+                quoteUiState =
+                    QuoteUiState.Success(
+                        MotivationalQuote(
+                            text =
+                                "Start where you are.",
+                            author =
+                                "Arthur Ashe"
+                        )
+                    ),
+                onRefreshQuote = {},
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> }
             )

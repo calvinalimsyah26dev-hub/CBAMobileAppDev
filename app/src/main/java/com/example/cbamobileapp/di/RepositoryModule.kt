@@ -1,5 +1,7 @@
 package com.example.cbamobileapp.di
 
+import com.example.cbamobileapp.data.NetworkQuoteRepository
+import com.example.cbamobileapp.data.QuoteRepository
 import com.example.cbamobileapp.data.RoomTaskRepository
 import com.example.cbamobileapp.data.TaskRepository
 import dagger.Binds
@@ -17,4 +19,10 @@ abstract class RepositoryModule {
     abstract fun bindTaskRepository(
         implementation: RoomTaskRepository
     ): TaskRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindQuoteRepository(
+        implementation: NetworkQuoteRepository
+    ): QuoteRepository
 }
