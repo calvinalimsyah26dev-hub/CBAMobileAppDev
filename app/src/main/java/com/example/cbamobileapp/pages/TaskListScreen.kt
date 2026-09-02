@@ -40,6 +40,19 @@ import com.example.cbamobileapp.model.ProductivityTask
 import com.example.cbamobileapp.model.TaskPriority
 import com.example.cbamobileapp.ui.theme.AiProductivityCoachTheme
 import com.example.cbamobileapp.viewmodel.QuoteUiState
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.example.cbamobileapp.notification.NotificationHelper
+import com.example.cbamobileapp.notification.ReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +82,72 @@ fun TaskListScreen(
 
     val completedTaskCount = tasks.count { task ->
         task.isCompleted
+    }
+
+    val context = LocalContext.current
+
+    var remindersEnabled by remember {
+        mutableStateOf(
+            ReminderScheduler.areRemindersEnabled(
+                context
+            )
+        )
+    }
+
+    val notificationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract =
+                ActivityResultContracts.RequestPermission()
+        ) { permissionGranted ->
+            if (permissionGranted) {
+                ReminderScheduler.enableReminders(
+                    context
+                )
+
+                remindersEnabled = true
+
+                NotificationHelper.showTaskReminder(
+                    context = context,
+                    incompleteTaskCount =
+                        activeTasks.size
+                )
+            } else {
+                remindersEnabled = false
+
+                Toast.makeText(
+                    context,
+                    "Notification permission was not granted.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+    fun enableNotifications() {
+        val permissionAlreadyGranted =
+            Build.VERSION.SDK_INT <
+                    Build.VERSION_CODES.TIRAMISU ||
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) == PackageManager.PERMISSION_GRANTED
+
+        if (permissionAlreadyGranted) {
+            ReminderScheduler.enableReminders(
+                context
+            )
+
+            remindersEnabled = true
+
+            NotificationHelper.showTaskReminder(
+                context = context,
+                incompleteTaskCount =
+                    activeTasks.size
+            )
+        } else {
+            notificationPermissionLauncher.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        }
     }
 
     Scaffold(
@@ -166,6 +245,29 @@ fun TaskListScreen(
     if (showSettings) {
         SettingsDialog(
             userEmail = userEmail,
+            remindersEnabled = remindersEnabled,
+            onRemindersChanged = { enabled ->
+                if (enabled) {
+                    enableNotifications()
+                } else {
+                    ReminderScheduler.disableReminders(
+                        context
+                    )
+
+                    remindersEnabled = false
+                }
+            },
+            onTestNotification = {
+                if (NotificationHelper.canShowNotifications(context)) {
+                    NotificationHelper.showTaskReminder(
+                        context = context,
+                        incompleteTaskCount =
+                            activeTasks.size.coerceAtLeast(1)
+                    )
+                } else {
+                    enableNotifications()
+                }
+            },
             onDismiss = {
                 showSettings = false
             },
@@ -230,6 +332,9 @@ private fun EmptyTaskMessage(
 @Composable
 private fun SettingsDialog(
     userEmail: String,
+    remindersEnabled: Boolean,
+    onRemindersChanged: (Boolean) -> Unit,
+    onTestNotification: () -> Unit,
     onDismiss: () -> Unit,
     onSignOut: () -> Unit
 ) {
@@ -239,39 +344,78 @@ private fun SettingsDialog(
             Text("Settings")
         },
         text = {
-            Column {
-                Text(
-                    text = "Signed in as",
-                    style =
-                        MaterialTheme.typography.labelMedium,
-                    color =
-                        MaterialTheme.colorScheme
-                            .onSurfaceVariant
-                )
+            Column(
+                verticalArrangement =
+                    Arrangement.spacedBy(16.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Signed in as",
+                        style =
+                            MaterialTheme.typography.labelMedium,
+                        color =
+                            MaterialTheme.colorScheme
+                                .onSurfaceVariant
+                    )
 
-                Spacer(
-                    modifier = Modifier.height(4.dp)
-                )
+                    Text(
+                        text = userEmail.ifBlank {
+                            "No email available"
+                        },
+                        style =
+                            MaterialTheme.typography.bodyLarge
+                    )
+                }
 
-                Text(
-                    text = userEmail.ifBlank {
-                        "No email available"
-                    },
-                    style =
-                        MaterialTheme.typography.bodyLarge
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween,
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Daily reminders",
+                            style =
+                                MaterialTheme.typography.titleMedium
+                        )
 
-                Spacer(
-                    modifier = Modifier.height(16.dp)
-                )
+                        Text(
+                            text =
+                                "Remind me when unfinished tasks remain.",
+                            style =
+                                MaterialTheme.typography.bodySmall,
+                            color =
+                                MaterialTheme.colorScheme
+                                    .onSurfaceVariant
+                        )
+                    }
+
+                    Switch(
+                        checked = remindersEnabled,
+                        onCheckedChange =
+                            onRemindersChanged
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = onTestNotification,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Send test notification")
+                }
 
                 Text(
                     text =
-                        "Signing out will return you to " +
-                                "the login screen. Your tasks are " +
-                                "stored securely in your account.",
+                        "Daily reminders are approximate because " +
+                                "Android chooses a battery-efficient time.",
                     style =
-                        MaterialTheme.typography.bodyMedium
+                        MaterialTheme.typography.bodySmall,
+                    color =
+                        MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         },
@@ -292,7 +436,7 @@ private fun SettingsDialog(
             TextButton(
                 onClick = onDismiss
             ) {
-                Text("Cancel")
+                Text("Close")
             }
         }
     )
