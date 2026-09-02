@@ -6,6 +6,8 @@ import com.example.cbamobileapp.data.NetworkQuoteRepository
 import com.example.cbamobileapp.data.QuoteRepository
 import com.example.cbamobileapp.data.FirestoreTaskRepository
 import com.example.cbamobileapp.data.TaskRepository
+import com.example.cbamobileapp.data.AiCoachRepository
+import com.example.cbamobileapp.data.FirebaseAiCoachRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         implementation: FirebaseAuthRepository
     ): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiCoachRepository(
+        implementation: FirebaseAiCoachRepository
+    ): AiCoachRepository
 }

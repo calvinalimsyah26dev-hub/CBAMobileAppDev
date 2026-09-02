@@ -68,4 +68,6 @@ dependencies {
     implementation("androidx.hilt:hilt-lifecycle-viewmodel-compose:1.4.0")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.work:work-runtime-ktx:2.11.2")
+    implementation("com.google.firebase:firebase-ai")
+    implementation("com.google.firebase:firebase-appcheck-debug")
 }

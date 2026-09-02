@@ -61,6 +61,7 @@ fun TaskListScreen(
     quoteUiState: QuoteUiState,
     onRefreshQuote: () -> Unit,
     onAddTaskClick: () -> Unit,
+    onOpenAiCoach: () -> Unit,
     onTaskCompletedChange: (Long, Boolean) -> Unit,
     userEmail: String,
     onSignOut: () -> Unit,
@@ -194,6 +195,13 @@ fun TaskListScreen(
                 uiState = quoteUiState,
                 onRefresh = onRefreshQuote
             )
+
+            OutlinedButton(
+                onClick = onOpenAiCoach,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Ask AI Coach")
+            }
 
             TaskProgressText(
                 remainingTaskCount = activeTasks.size,
@@ -496,7 +504,8 @@ private fun TaskListScreenPreview() {
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> },
                 userEmail = "student@example.com",
-                onSignOut = {}
+                onSignOut = {},
+                onOpenAiCoach = {}
             )
         }
     }
@@ -524,7 +533,8 @@ private fun EmptyTaskListScreenPreview() {
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> },
                 userEmail = "student@example.com",
-                onSignOut = {}
+                onSignOut = {},
+                onOpenAiCoach = {}
             )
         }
     }
@@ -554,7 +564,8 @@ private fun CompletedTaskListScreenPreview() {
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> },
                 userEmail = "student@example.com",
-                onSignOut = {}
+                onSignOut = {},
+                onOpenAiCoach = {}
             )
         }
     }
@@ -582,7 +593,8 @@ private fun DarkTaskListScreenPreview() {
                 onAddTaskClick = {},
                 onTaskCompletedChange = { _, _ -> },
                 userEmail = "student@example.com",
-                onSignOut = {}
+                onSignOut = {},
+                onOpenAiCoach = {}
             )
         }
     }
